@@ -1,0 +1,166 @@
+================================================================================
+  INSTRUCTIONS — Kernel Learning on Riemannian Manifold
+  (Geodesic Distance Preservation)
+================================================================================
+
+
+1. PREREQUISITES
+----------------
+  • Python 3.8 or higher (3.9+ recommended)
+  • pip  (comes with Python)
+
+
+2. PROJECT STRUCTURE
+--------------------
+  ML_ASSIGNMENT/
+  ├── README.md                 ← Algorithm description
+  ├── requirements.txt          ← Python dependencies
+  ├── instructions.txt          ← This file
+  ├── Kernel_Learning_Method_on_Riemannian_Manifold_with_Geodesic_Distance_Preservation.pdf
+  └── src/
+      ├── features.py           ← Step 1: Feature extraction (x,y,I,Ix,Iy,Ixx,Iyy)
+      ├── covariance.py         ← Step 2: SPD covariance matrix
+      ├── log_mapping.py        ← Steps 3-5: Log-Euclidean mapping, vectorisation,
+      │                            geodesic distance computation
+      ├── mahalanobis.py        ← Step 6: Mahalanobis distance learning (iterative)
+      ├── kernel_learning.py    ← Step 7: Initial kernel K0 = X A X^T + baselines
+      ├── bregman.py            ← Step 8: Bregman kernel optimisation
+      └── main.py               ← Step 9-10: Full pipeline + KNN classification
+
+
+3. INSTALLATION (Solving the "externally-managed-environment" error)
+------------------------------------------------------------------
+
+  Modern Linux distributions (like Arch Linux, EndeavourOS, Debian, Ubuntu)
+  prevent system-wide pip installations to protect the OS (PEP 668).
+  To install dependencies and run the project, you MUST use a virtual environment.
+
+  a) Open your terminal in the project directory (ML_ASSIGNMENT).
+
+  b) Create a virtual environment named `venv`:
+
+      python3 -m venv venv
+
+  c) Activate the virtual environment:
+
+      source venv/bin/activate          # Linux / macOS
+      # OR
+      venv\Scripts\activate             # Windows
+
+     (Your terminal prompt will change to show `(venv)` at the beginning)
+
+  d) Install dependencies inside the active environment:
+
+      pip install -r requirements.txt
+
+     This installs: numpy, scipy, opencv-python, scikit-learn
+
+
+4. RUNNING THE PROJECT
+----------------------
+
+  First, ensure your virtual environment is ACTIVE. If your terminal doesn't say
+  `(venv)` at the start of the line, run `source venv/bin/activate` again!
+
+  From the project root directory, run:
+
+      python src/main.py
+
+  Or, if you are inside the src/ folder:
+
+      cd src
+      python main.py
+      
+  When you are completely finished, you can exit the environment by typing:
+  
+      deactivate
+
+
+
+5. WHAT TO EXPECT
+-----------------
+  The script will:
+
+    [1]  Generate 40 synthetic texture images (4 classes × 10 samples)
+    [2]  Extract 7-dimensional per-pixel features
+    [3]  Compute covariance matrices (7×7 SPD)
+    [4]  Apply matrix logarithm (log-Euclidean mapping)
+    [5]  Vectorise each log-mapped matrix
+    [6]  Build the full geodesic distance matrix
+    [7]  Learn the Mahalanobis matrix A (iterative ITML-style)
+    [8]  Construct initial kernel K0 = X A X^T
+    [9]  Optimise kernel via Bregman projection
+    [10] Classify with KNN (k=3, precomputed distance) and print accuracy
+
+  At the end you will see:
+    • Final kernel matrix shape
+    • Bregman Kernel accuracy
+    • Gaussian Kernel baseline accuracy
+    • Log-Euclidean Kernel baseline accuracy
+
+
+6. EXPECTED RUNTIME
+-------------------
+  With default settings (40 samples, 64×64 images):
+    • Total runtime:  approximately 1–3 minutes
+    • Bottleneck:     Mahalanobis learning (Step 7) and Bregman optimisation (Step 9)
+
+  To speed up for quick testing, reduce samples_per_class or img_size in main.py.
+
+
+7. CUSTOMISATION
+----------------
+  In main.py you can adjust:
+    • n_classes           — number of texture classes (default: 4)
+    • samples_per_class   — images per class           (default: 10)
+    • img_size            — image resolution            (default: 64)
+    • n_iters / lr        — Mahalanobis learning params
+    • max_iter            — Bregman optimisation iterations
+    • n_neighbors         — KNN neighbour count         (default: 3)
+
+
+8. USING YOUR OWN IMAGES
+-------------------------
+  Replace the call to generate_dummy_images() in main.py with code that
+  loads real grayscale images. For example, using the Brodatz dataset:
+
+      import cv2, glob
+      images = []
+      labels = []
+      for cls_idx, cls_dir in enumerate(sorted(glob.glob("data/*"))):
+          for fpath in sorted(glob.glob(cls_dir + "/*.png")):
+              img = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
+              images.append(img)
+              labels.append(cls_idx)
+      labels = np.array(labels)
+
+
+9. PIPELINE SUMMARY (from README)
+----------------------------------
+
+  Image → Features → Covariance (SPD)
+      → logm(C) → vector → Geodesic distances
+      → Mahalanobis matrix A → K0 = X A X^T
+      → Bregman optimisation → Final kernel K
+      → KNN classification
+
+
+10. TROUBLESHOOTING
+-------------------
+  • "ModuleNotFoundError: No module named 'cv2'"
+      → Run:  pip install opencv-python
+
+  • "scipy.linalg.logm is slow"
+      → This is expected for large matrices. Reduce img_size for faster runs.
+
+  • Negative eigenvalues warning
+      → The code automatically clips eigenvalues to stay SPD/PSD.
+        This is normal for iterative approximations.
+
+  • Low accuracy
+      → With synthetic data, accuracy depends on how separable the generated
+        textures are. Try with real texture datasets for meaningful results.
+
+================================================================================
+  END OF INSTRUCTIONS
+================================================================================
